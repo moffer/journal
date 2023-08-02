@@ -55,3 +55,47 @@ or:
     phpunit -c phpunit.integration.xml
 
 for integration tests
+
+
+## Setup dev environment
+- Add `docker-compose.yml`:
+  ```yaml
+    version: '3.8'
+    
+    services:
+        db:
+            image: postgres:13
+            container_name: nextcloud-db
+            volumes:
+            - nextcloud-db:/var/lib/postgresql/data
+            environment:
+              - POSTGRES_DB=nextcloud
+              - POSTGRES_USER=nextcloud
+              - POSTGRES_PASSWORD=your-db-password
+            restart: unless-stopped
+            
+        app:
+            image: nextcloud:latest
+            container_name: nextcloud-app
+            user: ":1000"
+            depends_on:
+            - db
+            ports:
+              - "8080:80"
+            volumes:
+              - ./nextcloud-data:/var/www/html
+              - ./<local folder to this project>/journal/:/var/www/html/custom_apps/journal
+            environment:
+              - POSTGRES_HOST=db
+              - POSTGRES_DB=nextcloud
+              - POSTGRES_USER=nextcloud
+              - POSTGRES_PASSWORD=your-db-password
+            restart: unless-stopped
+  
+    volumes:
+        nextcloud-db:
+    ```
+- Change the volume <local folder to this project> that points to this directory.
+- Run `npm install` here.
+- Run `make all`
+- Run `docker-compose up -d` where the compose file is located above.
