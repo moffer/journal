@@ -50,7 +50,11 @@
 			<div v-else id="emptycontent">
 				<div class="icon-file" />
 				<h2>{{
-				 t('journal', 'Create a note to get started') }}</h2>
+				 t('journal', 'Create a note to get started')
+          }}
+          {{ calendarStore?.calendars}}
+          {{ calendarStore?.journalTitles}}
+        </h2>
 			</div>
 		</AppContent>
 	</div>
@@ -68,6 +72,8 @@ import { generateUrl } from '@nextcloud/router'
 import { showError, showSuccess } from '@nextcloud/dialogs'
 import axios from '@nextcloud/axios'
 
+import {useCalendarStore} from "./stores/calendar.store";
+
 export default {
 	name: 'App',
 	components: {
@@ -83,6 +89,7 @@ export default {
 			currentNoteId: null,
 			updating: false,
 			loading: true,
+      calendarStore: null,
 		}
 	},
 	computed: {
@@ -116,6 +123,9 @@ export default {
 			console.error(e)
 			showError(t('notestutorial', 'Could not fetch notes'))
 		}
+    this.calendarStore = useCalendarStore();
+    await this.calendarStore.fetchJournalEntries();
+    console.log('entries', this.calendarStore.journalEntries);
 		this.loading = false
 	},
 
