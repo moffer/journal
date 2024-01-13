@@ -83,8 +83,7 @@ for integration tests
             ports:
               - "8080:80"
             volumes:
-              - ./nextcloud-data:/var/www/html
-              - ./<local folder to this project>/journal/:/var/www/html/custom_apps/journal
+              - ./journal/:/var/www/html/custom_apps/journal
             environment:
               - POSTGRES_HOST=db
               - POSTGRES_DB=nextcloud
@@ -95,7 +94,24 @@ for integration tests
     volumes:
         nextcloud-db:
     ```
-- Change the volume <local folder to this project> that points to this directory.
 - Run `npm install` here.
 - Run `make all`
 - Run `docker-compose up -d` where the compose file is located above.
+- Go to `localhost:8080` and configure admin account.
+  - Ignore, that recommend apps can't be fetched. Instead refresh the page.
+- Go to installed apps. 
+- Activate `Journal` app (2x necessary).
+- Go into app: `docker-compose exec  app /bin/bash`
+- Install vim: `apt update && apt install vim`
+- Update config.php: 
+  Add trusted ip: 
+  ```
+    array (
+         # 'localhost:8080',
+         # '192.*.*.*',
+          '10.*.*.*',
+  ),
+  ```
+- Add on Android phone in DAVx5 app the created admin account with `ip:8080/remote.php/dav`
+- Add a new calendar with journal as type.
+- Run `npm run watch` to keep build up to date.
