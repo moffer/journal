@@ -6,29 +6,31 @@
 	<div id="content" class="app-journal">
 		<AppNavigation>
 			<AppNavigationNew v-if="!loading"
-				:text="t('journal', 'New note')"
-				:disabled="false"
+				:text="t('journal', 'New journal entry')"
+				:disabled="true"
 				button-id="new-journal-button"
 				button-class="icon-add"
 				@click="newNote" />
 			<ul>
-				<AppNavigationItem v-for="note in notes"
-					:key="note.id"
-					:title="note.title ? note.title : t('journal', 'New note')"
-					:class="{active: currentNoteId === note.id}"
-					@click="openNote(note)">
+				<AppNavigationItem v-for="journalEntry in calendarStore?.journalEntries"
+					:key="journalEntry.id"
+					:title="journalEntry.title ? journalEntry.title : t('journal', 'New journal entry')"
+					:class="{active: currentJournalEntryId === journalEntry.id}"
+					@click="openNote(journalEntry)">
 					<template slot="actions">
-						<ActionButton v-if="note.id === -1"
-							icon="icon-close"
-							@click="cancelNewNote(note)">
+						<ActionButton v-if="journalEntry.id === -1"
+							:disabled="true"
+							icon="icon-close" 
+							@click="cancelNewNote(journalEntry)">
 							{{
-							t('journal', 'Cancel note creation') }}
+							t('journal', 'Cancel journal entry creation') }}
 						</ActionButton>
 						<ActionButton v-else
+							:disabled="true"
 							icon="icon-delete"
-							@click="deleteNote(note)">
+							@click="deleteNote(journalEntry)">
 							{{
-							 t('journal', 'Delete note') }}
+							 t('journal', 'Delete journal entry') }}
 						</ActionButton>
 					</template>
 				</AppNavigationItem>
@@ -44,14 +46,12 @@
 				<input type="button"
 					class="primary"
 					:value="t('journal', 'Save')"
-					:disabled="updating || !savePossible"
+					:disabled="true || updating || !savePossible"
 					@click="saveNote">
 			</div>
 			<div v-else id="emptycontent">
 				<div class="icon-file" />
-				<h2>{{
-				 t('journal', 'Create a note to get started')
-          }}
+				<h2>{{t('journal', 'Create a entry to get started!')}}
           {{ calendarStore?.calendars}}
           {{ calendarStore?.journalTitles}}
         </h2>
@@ -86,7 +86,7 @@ export default {
 	data() {
 		return {
 			notes: [],
-			currentNoteId: null,
+			currentJournalEntryId: null,
 			updating: false,
 			loading: true,
       calendarStore: null,
@@ -98,10 +98,10 @@ export default {
 		 * @returns {Object|null}
 		 */
 		currentNote() {
-			if (this.currentNoteId === null) {
+			if (this.currentJournalEntryId === null) {
 				return null
 			}
-			return this.notes.find((note) => note.id === this.currentNoteId)
+			return this.calendarStore.journalEntries.find((journalEntry) => journalEntry.id === this.currentJournalEntryId)
 		},
 
 		/**
@@ -117,8 +117,8 @@ export default {
 	 */
 	async mounted() {
 		try {
-			const response = await axios.get(generateUrl('/apps/journal/notes'))
-			this.notes = response.data
+			// const response = await axios.get(generateUrl('/apps/journal/notes'))
+			// this.notes = response.data
 		} catch (e) {
 			console.error(e)
 			showError(t('notestutorial', 'Could not fetch notes'))
@@ -132,13 +132,13 @@ export default {
 	methods: {
 		/**
 		 * Create a new note and focus the note content field automatically
-		 * @param {Object} note Note object
+		 * @param {Object} journalEntry Note object
 		 */
-		openNote(note) {
+		openNote(journalEntry) {
 			if (this.updating) {
 				return
 			}
-			this.currentNoteId = note.id
+			this.currentJournalEntryId = journalEntry.id
 			this.$nextTick(() => {
 				this.$refs.content.focus()
 			})
@@ -148,7 +148,7 @@ export default {
 		 * create a new note or save
 		 */
 		saveNote() {
-			if (this.currentNoteId === -1) {
+			if (this.currentJournalEntryId === -1) {
 				this.createNote(this.currentNote)
 			} else {
 				this.updateNote(this.currentNote)
@@ -160,8 +160,8 @@ export default {
 		 * has been persisted in the backend
 		 */
 		newNote() {
-			if (this.currentNoteId !== -1) {
-				this.currentNoteId = -1
+			if (this.currentJournalEntryId !== -1) {
+				this.currentJournalEntryId = -1
 				this.notes.push({
 					id: -1,
 					title: '',
@@ -177,7 +177,7 @@ export default {
 		 */
 		cancelNewNote() {
 			this.notes.splice(this.notes.findIndex((note) => note.id === -1), 1)
-			this.currentNoteId = null
+			this.currentJournalEntryId = null
 		},
 		/**
 		 * Create a new note by sending the information to the server
@@ -187,9 +187,9 @@ export default {
 			this.updating = true
 			try {
 				const response = await axios.post(generateUrl('/apps/journal/notes'), note)
-				const index = this.notes.findIndex((match) => match.id === this.currentNoteId)
+				const index = this.notes.findIndex((match) => match.id === this.currentJournalEntryId)
 				this.$set(this.notes, index, response.data)
-				this.currentNoteId = response.data.id
+				this.currentJournalEntryId = response.data.id
 			} catch (e) {
 				console.error(e)
 				showError(t('notestutorial', 'Could not create the note'))
@@ -218,8 +218,8 @@ export default {
 			try {
 				await axios.delete(generateUrl(`/apps/journal/notes/${note.id}`))
 				this.notes.splice(this.notes.indexOf(note), 1)
-				if (this.currentNoteId === note.id) {
-					this.currentNoteId = null
+				if (this.currentJournalEntryId === note.id) {
+					this.currentJournalEntryId = null
 				}
 				showSuccess(t('journal', 'Note deleted'))
 			} catch (e) {
@@ -238,6 +238,9 @@ export default {
 		display: flex;
 		flex-direction: column;
 		flex-grow: 1;
+	}
+	.app-content {
+		padding-left: 40px!important;
 	}
 
 	input[type='text'] {

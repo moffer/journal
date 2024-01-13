@@ -20,13 +20,12 @@ export class CalendarService {
             // const parserManager = getParserManager()
             // const parser = parserManager.getParserForFileType('text/calendar')
             const calendar = mapDavCollectionToCalendar(simpleCalendar, null);
-
             try {
                 const calendarObject = mapCDavObjectToCalendarObject(event, calendar.id)
                 const iterator = calendarObject.calendarComponent.getVObjectIterator()
                 const firstVObject = iterator.next().value
-                //journalEntries.push(Object.assign(firstVObject, {dav: calendarObject}))
-                journalEntries.push(firstVObject);
+                const content = firstVObject._properties.get('DESCRIPTION')[0].value
+                journalEntries.push(Object.assign(firstVObject, {content}))
             } catch (e) {
                 console.error(`could not convert calendar object of calendar ${calendar.id}`, e, {
                     response: event,
